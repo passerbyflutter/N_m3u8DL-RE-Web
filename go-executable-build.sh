@@ -22,7 +22,7 @@ do
     GOARCH=${platform_split[1]}
     output_file_name=$output_name'-'$GOOS'-'$GOARCH
     if [ $GOOS = "windows" ]; then
-        output_name+='.exe'
+        output_file_name+='.exe'
     fi    
 
     env GOOS=$GOOS GOARCH=$GOARCH go build -ldflags "-X main.version=$RELEASE_VERSION -X main.buildTime=$NOW -X main.isRelease=true" -o $output_file_name $package
