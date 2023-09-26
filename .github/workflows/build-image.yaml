@@ -21,7 +21,7 @@ jobs:
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
-        repository: passerby/n_m3u8el-re-web
+        repository: passerbyflutter/n_m3u8el-re-web
         dockerfile: Dockerfile
         always_pull: true
         tags: ${{ github.ref_name }}
