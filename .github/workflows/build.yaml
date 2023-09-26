@@ -23,7 +23,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: frontend-resource
-          path: ./dist
+          path: ./web/dist
   build-backend:
     name: Build backend resource
     needs: build-frontend
@@ -39,6 +39,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: frontend-resource
+          path: ./web/dist
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
