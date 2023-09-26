@@ -31,7 +31,7 @@ jobs:
     steps:
       - name: Set env
         run: |
-          echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+          echo "RELEASE_VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
           echo "NOW=$(date +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -70,3 +70,4 @@ jobs:
           file: N_m3u8DL-RE-Web*
           tag: ${{ github.ref }}
           overwrite: true
+          file_glob: true
