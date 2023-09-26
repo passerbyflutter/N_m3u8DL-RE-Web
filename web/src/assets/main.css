@@ -1,0 +1,13 @@
+@import './base.css';
+@import 'vant/lib/index.css';
+
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+
+  font-weight: normal;
+}
+
+main {
+  height: 100vh;
+}

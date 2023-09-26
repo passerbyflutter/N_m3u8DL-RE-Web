@@ -1,0 +1,18 @@
+version: "3.5"
+
+services:
+  server:
+    image: passerby/n_m3u8el-re-web:${RELEASE_VERSION}
+    build:
+      dockerfile: Dockerfile
+      args:
+        RELEASE_VERSION: ${RELEASE_VERSION}
+        NOW: ${NOW}
+    environment:
+      DOWNLOAD_POOL_SIZE: 1
+      SAVE_PATH: /mnt/download
+    volumes:
+      - ./download:/mnt/download
+    ports:
+      - "8080:8080"
+    restart: always
