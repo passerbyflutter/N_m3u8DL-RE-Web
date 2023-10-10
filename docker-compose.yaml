@@ -2,7 +2,7 @@ version: "3.5"
 
 services:
   server:
-    image: passerby/n_m3u8el-re-web:${RELEASE_VERSION}
+    image: passerby/n_m3u8dl-re-web:${RELEASE_VERSION}
     build:
       dockerfile: Dockerfile
       args:
