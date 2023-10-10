@@ -25,4 +25,4 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           push: true
-          tags: passerbyflutter/n_m3u8el-re-web:${{ github.ref_name }}
+          tags: passerbyflutter/n_m3u8dl-re-web:${{ github.ref_name }}
