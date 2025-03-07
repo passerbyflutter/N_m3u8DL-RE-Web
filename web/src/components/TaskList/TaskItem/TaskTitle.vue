@@ -18,6 +18,8 @@ const statusType = computed(() => {
             return "primary"
         case "Finished":
             return "success"
+        case "Error":
+            return "danger"
         default:
             return "default"
     }
