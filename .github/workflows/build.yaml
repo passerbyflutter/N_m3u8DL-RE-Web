@@ -20,7 +20,7 @@ jobs:
       - name: npm run build
         run: npm run build
       - name: Archive frontend production artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: frontend-resource
           path: ./web/dist
@@ -36,7 +36,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Download frontend resource
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: frontend-resource
           path: ./web/dist
@@ -49,7 +49,7 @@ jobs:
       - name: Build
         run: bash go-executable-build.sh ./cmd N_m3u8DL-RE-Web-${{ github.ref_name }}
       - name: Archive production artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: N_m3u8DL-RE-Web-executable
           path: N_m3u8DL-RE-Web*
@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download binaries
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: N_m3u8DL-RE-Web-executable
       - name: Upload binaries to release

@@ -110,6 +110,7 @@ func setApiHandler(router *gin.Engine) {
 	router.GET("/api/tasks", listTasks)
 	router.POST("/api/tasks", AddTasks)
 	router.DELETE("/api/tasks/:id", DeleteTasks)
+	router.DELETE("/api/tasks/completed", DeleteCompletedTasks)
 }
 
 func gracefulShutdown(srv *http.Server) {
@@ -170,4 +171,17 @@ func DeleteTasks(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusBadRequest, map[string]interface{}{"message": fmt.Sprintf("ID %s not found!", id)})
 	}
+}
+
+func DeleteCompletedTasks(c *gin.Context) {
+	for id, poolTask := range downloadTasks {
+		if poolTask.Status == lib.Finished {
+			if poolTask.Cmd != nil {
+				poolTask.Cmd.Process.Signal(os.Kill)
+			}
+			poolTask.Status = lib.Deleted
+			delete(downloadTasks, id)
+		}
+	}
+	c.JSON(http.StatusOK, map[string]interface{}{"message": "Completed tasks deleted!"})
 }

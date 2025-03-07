@@ -21,7 +21,7 @@ func GenerateCmd(param Param) (*exec.Cmd, io.Reader) {
 		}
 	}
 
-	cmd := exec.Command(`N_m3u8DL-RE`, `--ui-language`, `en-US`, `--auto-select`, "--save-dir", saveDir, "--tmp-dir", saveDir, param.Url)
+	cmd := exec.Command(`F:\Downloads\[tools]\N_m3u8DL-RE\N_m3u8DL-RE.exe`, `--ui-language`, `en-US`, `--auto-select`, "--save-dir", saveDir, "--tmp-dir", saveDir, param.Url)
 	if param.Title != "" {
 		cmd.Args = append(cmd.Args, `--save-name`, param.Title)
 	}

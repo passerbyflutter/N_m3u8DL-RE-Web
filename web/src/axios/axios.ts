@@ -34,3 +34,13 @@ function handleDates(body: any) {
     else if (typeof value === 'object') handleDates(value)
   }
 }
+
+export async function deleteCompletedTasks() {
+  try {
+    const response = await axios.delete('/api/tasks/completed');
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting completed tasks:', error);
+    throw error;
+  }
+}
