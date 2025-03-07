@@ -7,4 +7,5 @@ const (
 	Downloading DownloadStatus = "Downloading"
 	Finished    DownloadStatus = "Finished"
 	Deleted     DownloadStatus = "Deleted"
+	Error       DownloadStatus = "Error"
 )

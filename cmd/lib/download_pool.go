@@ -60,39 +60,76 @@ func (task *PoolTask) downloadTaskHandler() {
 		return
 	}
 
-	cmd, ioReader := GenerateCmd(Param{
+	// Initialize command and output processor
+	cmd, reader, wg := GenerateCmd(Param{
 		Url:   task.Url,
 		Title: task.Title,
 	})
 	task.Cmd = cmd
 	task.Status = Downloading
 	task.StartTime = time.Now().UTC()
-	cmd.Start()
 
-	scanner := bufio.NewScanner(ioReader)
+	// Start command
+	if err := cmd.Start(); err != nil {
+		task.Status = Error
+		task.FinishTime = time.Now().UTC()
+		return
+	}
+
+	// Configure scanner for output processing
+	scanner := bufio.NewScanner(reader)
 	scanner.Split(bufio.ScanLines)
 	saveNameRegex, _ := regexp.Compile(`Save Name: ([\w\W]+)`)
 	progressRegex, _ := regexp.Compile(`(\d{0,3})%$`)
+	errorRegex, _ := regexp.Compile(`(?i)(error|fail|exception)`)
 
-	for scanner.Scan() {
-		msg := scanner.Text()
+	// Track error status
+	hasError := false
 
-		if task.Title == "" {
-			match := saveNameRegex.MatchString(msg)
-			if match {
-				task.Title = saveNameRegex.FindStringSubmatch(msg)[1]
+	// Process output in new goroutine
+	outputDone := make(chan bool)
+	go func() {
+		defer close(outputDone)
+		for scanner.Scan() {
+			msg := scanner.Text()
+
+			// Check for error messages
+			if errorRegex.MatchString(msg) {
+				hasError = true
+			}
+
+			if task.Title == "" {
+				if match := saveNameRegex.FindStringSubmatch(msg); match != nil {
+					task.Title = match[1]
+				}
+			}
+
+			if match := progressRegex.FindStringSubmatch(msg); match != nil {
+				if progress, err := strconv.ParseUint(match[1], 10, 8); err == nil {
+					task.Progress = uint8(progress)
+				}
 			}
 		}
 
-		match := progressRegex.MatchString(msg)
-		if match {
-			progressText := progressRegex.FindStringSubmatch(msg)[1]
-			ui64, _ := strconv.ParseUint(progressText, 10, 8)
-			task.Progress = uint8(ui64)
+		// Check for scanner errors
+		if err := scanner.Err(); err != nil {
+			hasError = true
 		}
-	}
-	cmd.Wait()
-	task.Status = Finished
+	}()
+
+	// Wait for command completion
+	cmdErr := cmd.Wait()
+
+	// Wait for output processing to complete
+	<-outputDone
+	wg.Wait()
+
+	// Set final status based on execution results
 	task.FinishTime = time.Now().UTC()
-	task.Progress = uint8(100)
+	if cmdErr != nil || hasError {
+		task.Status = Error
+	} else {
+		task.Status = Finished
+		task.Progress = 100
+	}
 }
