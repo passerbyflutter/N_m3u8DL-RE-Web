@@ -13,11 +13,59 @@ export interface DownloadTask {
   finishTime?: Date
 }
 
+const RETRY_INTERVAL = 5000 // 5-second retry interval
+
 export const downloadTaskStore = defineStore('downloadTasks', () => {
   const downloadTasks: Ref<DownloadTask[]> = ref([])
-  async function reload() {
-    downloadTasks.value = (await axios.get<DownloadTask[]>('/api/tasks')).data
+  let eventSource: EventSource | null = null
+
+  const eventHandlers = {
+    onMessage: (event: MessageEvent) => {
+      const data = JSON.parse(event.data)
+      downloadTasks.value = data
+    },
+    
+    onError: () => {
+      closeEventSource()
+      scheduleReconnect()
+    }
   }
 
-  return { downloadTasks, reload }
+  function scheduleReconnect() {
+    setTimeout(initEventSource, RETRY_INTERVAL)
+  }
+
+  function initEventSource() {
+    closeEventSource()
+    setupEventSource()
+  }
+
+  function setupEventSource() {
+    eventSource = new EventSource('/api/tasks/events')
+    eventSource.onmessage = eventHandlers.onMessage
+    eventSource.onerror = eventHandlers.onError
+  }
+
+  function closeEventSource() {
+    if (eventSource) {
+      eventSource.close()
+      eventSource = null
+    }
+  }
+
+  async function reload() {
+    try {
+      const response = await axios.get<DownloadTask[]>('/api/tasks')
+      downloadTasks.value = response.data
+    } catch (error) {
+      console.error('Failed to reload tasks:', error)
+    }
+  }
+
+  return { 
+    downloadTasks, 
+    reload, 
+    initEventSource, 
+    closeEventSource 
+  }
 })

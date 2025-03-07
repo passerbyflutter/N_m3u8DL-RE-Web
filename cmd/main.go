@@ -108,9 +108,55 @@ func setSpaStaticResource(router *gin.Engine) {
 
 func setApiHandler(router *gin.Engine) {
 	router.GET("/api/tasks", listTasks)
+	router.GET("/api/tasks/events", taskEvents) // Add SSE endpoint
 	router.POST("/api/tasks", AddTasks)
 	router.DELETE("/api/tasks/:id", DeleteTasks)
 	router.DELETE("/api/tasks/completed", DeleteCompletedTasks)
+}
+
+func taskEvents(c *gin.Context) {
+	setupSSEHeaders(c)
+	handleSSEConnection(c)
+}
+
+func setupSSEHeaders(c *gin.Context) {
+	c.Header("Content-Type", "text/event-stream")
+	c.Header("Cache-Control", "no-cache")
+	c.Header("Connection", "keep-alive")
+	c.Header("Access-Control-Allow-Origin", "*")
+}
+
+func handleSSEConnection(c *gin.Context) {
+	clientGone := c.Writer.CloseNotify()
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-clientGone:
+			return
+		case <-ticker.C:
+			sendTasksUpdate(c)
+		}
+	}
+}
+
+func sendTasksUpdate(c *gin.Context) {
+	tasks := getTasksList()
+	c.SSEvent("message", tasks)
+	c.Writer.Flush()
+}
+
+func getTasksList() []*taskResponse {
+	taskResponseList := &[]*taskResponse{}
+	mapper.SetEnabledJsonTag(false)
+	mapper.MapperSlice(maps.Values(downloadTasks), taskResponseList)
+
+	sort.Slice(*taskResponseList, func(i, j int) bool {
+		return (*taskResponseList)[i].CreateTime.Before((*taskResponseList)[j].CreateTime)
+	})
+
+	return *taskResponseList
 }
 
 func gracefulShutdown(srv *http.Server) {
@@ -130,16 +176,7 @@ func gracefulShutdown(srv *http.Server) {
 }
 
 func listTasks(c *gin.Context) {
-	taskResponseList := &[]*taskResponse{}
-
-	mapper.SetEnabledJsonTag(false)
-	mapper.MapperSlice(maps.Values(downloadTasks), taskResponseList)
-
-	sort.Slice(*taskResponseList, func(i, j int) bool {
-		return (*taskResponseList)[i].CreateTime.Before((*taskResponseList)[j].CreateTime)
-	})
-
-	c.JSON(http.StatusOK, taskResponseList)
+	c.JSON(http.StatusOK, getTasksList())
 }
 
 func AddTasks(c *gin.Context) {
