@@ -4,40 +4,65 @@ import { downloadTaskStore } from '@/stores/downloadTaskStore'
 import { computed, ref, type Ref } from 'vue'
 import TaskTitle from './TaskItem/TaskTitle.vue'
 import TaskContent from './TaskItem/TaskContent.vue'
-import { onMounted } from 'vue'
+import { onMounted, onUnmounted } from 'vue'
 
 const store = downloadTaskStore()
+const loading = ref(false)
+const activeNames: Ref<string[]> = ref([])
 
-let loading = ref(false);
-let activeNames: Ref<string[]> = ref([]);
+// Computed Properties
+const hasTasks = computed(() => store.downloadTasks.length > 0)
 
-onMounted(async () => {
+// Lifecycle Hooks
+onMounted(setupTaskList)
+onUnmounted(cleanup)
+
+// Component Functions
+async function setupTaskList() {
+    initializeSSEConnection()
+    await loadInitialTasks()
+}
+
+function initializeSSEConnection() {
+    store.initEventSource()
+}
+
+async function loadInitialTasks() {
     await store.reload()
-})
+}
 
-const hasTasks = computed(() => store.downloadTasks.length != 0)
+function cleanup() {
+    store.closeEventSource()
+}
 
 async function onRefresh() {
     try {
         await store.reload()
     } finally {
-        activeNames.value = [];
-        loading.value = false;
+        resetUI()
     }
 }
 
+function resetUI() {
+    activeNames.value = []
+    loading.value = false
+}
 </script>
 
 <template>
     <PullRefresh v-model="loading" @refresh="onRefresh">
         <Empty v-if="!hasTasks" description="No Download Tasks" />
-        <div class="collapse-container" v-if="hasTasks">
+        <div v-else class="collapse-container">
             <Collapse v-model="activeNames">
-                <CollapseItem v-for="task in store.downloadTasks" :key="task.id" :name="task.id">
+                <CollapseItem 
+                    v-for="task in store.downloadTasks" 
+                    :key="task.id" 
+                    :name="task.id"
+                >
                     <template #title>
-                        <TaskTitle :task="task"></TaskTitle>
+                        <TaskTitle :task="task" />
                     </template>
-                    <TaskContent :task="task"></TaskContent>
+                    <TaskContent :task="task" />
                 </CollapseItem>
             </Collapse>
         </div>
